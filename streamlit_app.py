@@ -28,6 +28,16 @@ def save_notes(data):
         json.dump(data, f, indent=2)
 
 
+def delete_note(routine_key, note_index):
+    notes_data = load_notes()
+    if routine_key in notes_data and 0 <= note_index < len(notes_data[routine_key]):
+        del notes_data[routine_key][note_index]
+        if not notes_data[routine_key]:  # If no notes left for this routine
+            del notes_data[routine_key]
+        save_notes(notes_data)
+        return True
+    return False
+
 def get_all_staff_names(notes_data):
     staff_names = set()
     for routine_notes in notes_data.values():
@@ -202,7 +212,15 @@ def main():
                             st.markdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
-                            st.write(note["note"])
+                                            st.write(note["note"])
+                          
+                                            # Add delete button
+                note_index = notes_data[key].index(note)
+                delete_key = f"delete_{key}_{note_index}_{note['time']}"
+                if st.button("🗑️ Delete Note", key=delete_key):
+                    if delete_note(key, note_index):
+                        st.success("Note deleted successfully!")
+                        st.rerun(
                             st.markdown("---")
 
     st.markdown("---")
