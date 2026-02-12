@@ -132,7 +132,7 @@ def main():
             # Create CSV export
             csv_buffer = io.StringIO()
             csv_writer = csv.writer(csv_buffer)
-            csv_writer.writerow(["Routine #", "Routine Name", "Dancers", "Staff", "Note", "Timestamp"])
+            csv_writer.writerow(["Routine", "Notes"]
             
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
@@ -140,8 +140,7 @@ def main():
                 key = f"#{num}"
                 if key in notes_data:
                     for note in notes_data[key]:
-                        csv_writer.writerow([num, title, dancers, note['staff'], note['note'], note['time']])
-            
+                    csv_writer.writerow([f"{title} - {dancers}", note['note']])            
             csv_data = csv_buffer.getvalue()
             
             st.download_button(
