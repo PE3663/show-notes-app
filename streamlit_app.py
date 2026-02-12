@@ -138,7 +138,8 @@ def main():
                 if not staff_name.strip():
                     st.error("Please enter your name.")
                 elif (not note_text.strip() and not audio_value):
-                    st.error("Please enter a note or record an audio note.")                else:
+                    st.error("Please enter a note or record an audio note.")
+                else:
                     if key not in notes_data:
                         notes_data[key] = []
                     notes_data[key].append(
