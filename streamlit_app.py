@@ -76,12 +76,13 @@ def main():
     )
 
     notes_data = load_notes()
+
     tab_enter, tab_review = st.tabs(["\U0001f4dd Enter Notes", "\U0001f4cb Review All Notes"])
 
     with tab_enter:
         # Removed columns - everything stacks vertically for mobile
         st.subheader("Select Routine")
-        
+
         routine_options = []
         for num, title, dancers in SHOW_ORDER:
             if num == 0:
@@ -111,18 +112,13 @@ def main():
                         f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
                     )
 
+            # Audio recording option
+            st.markdown("\U0001f3a4 **Voice Recording Option:**")
+            audio_value = st.audio_input("Record a voice note")
 
-                    # Audio recording option
-        st.write("🎤 **Voice Recording Option:**")
-        audio_value = st.audio_input("Click to record a voice note")
-        
-        if audio_value:
-            st.success("✓ Audio recorded! You can type additional notes below or save the audio note.")
-            # Store audio in session state for later use
-            if 'recorded_audio' not in st.session_state:
-                st.session_state.recorded_audio = audio_value
+            if audio_value:
+                st.success("Audio recorded! You can type additional notes below or save the audio note.")
 
-            
             note_text = st.text_area(
                 "Add your note:",
                 height=150,
@@ -145,7 +141,7 @@ def main():
                     notes_data[key].append(
                         {
                             "staff": staff_name.strip(),
-                            "note": ("🎤 [Audio Note] " + note_text.strip()) if audio_value else note_text.strip(),
+                            "note": ("\U0001f3a4 [Audio Note] " + note_text.strip()) if audio_value else note_text.strip(),
                             "time": datetime.now().strftime(
                                 "%b %d, %Y %I:%M %p"
                             ),
@@ -154,6 +150,7 @@ def main():
                     save_notes(notes_data)
                     st.success("Note saved!")
                     st.rerun()
+
         else:
             st.subheader("\U00002615 Intermission Break")
             st.write("No notes needed for the break.")
@@ -185,7 +182,6 @@ def main():
                         csv_writer.writerow([f"{title} - {dancers}", note['note']])
 
             csv_data = csv_buffer.getvalue()
-
             st.download_button(
                 label="\U0001f4be Download All Notes (CSV)",
                 data=csv_data,
@@ -254,7 +250,7 @@ def main():
                                     st.success("Note deleted successfully!")
                                     st.rerun()
 
-                            st.markdown("---")
+                        st.markdown("---")
 
     st.markdown("---")
     st.markdown(
