@@ -134,6 +134,33 @@ def main():
             st.info("No notes have been saved yet.")
         else:
             all_staff = get_all_staff_names(notes_data)
+
+                    # Backup/Export button
+        import csv
+        import io
+
+        # Create CSV export
+        csv_buffer = io.StringIO()
+        csv_writer = csv.writer(csv_buffer)
+        csv_writer.writerow(["Routine", "Notes"])
+
+        for num, title, dancers in SHOW_ORDER:
+            if num == 0:
+                continue
+            key = f"#{num}"
+            if key in notes_data:
+                for note in notes_data[key]:
+                    csv_writer.writerow([f"{title} - {dancers}", note['note']])
+        csv_data = csv_buffer.getvalue()
+
+        st.download_button(
+            label="\U0001f4be Download All Notes (CSV)",
+            data=csv_data,
+            file_name=f"show_notes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            help="Download all notes as a CSV file for backup"
+        )
+        st.markdown("---")
                         
             
             col1, col2 = st.columns(2)
