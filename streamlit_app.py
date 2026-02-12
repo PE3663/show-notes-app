@@ -6,7 +6,7 @@ from datetime import datetime
 st.set_page_config(
     page_title="PE Show Notes 2026",
     page_icon="\U0001f3ad",
-    layout="wide",
+        layout="centered",
 )
 
 DATA_FILE = "show_notes_data.json"
