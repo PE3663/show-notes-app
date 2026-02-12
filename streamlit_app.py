@@ -212,7 +212,7 @@ def main():
                             st.markdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
-                                            st.write(note["note"])
+                    st.write(note["note"])
                           
                                             # Add delete button
                                     note_index = notes_data[key].index(note)
