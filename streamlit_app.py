@@ -111,6 +111,18 @@ def main():
                         f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
                     )
 
+
+                    # Audio recording option
+        st.write("🎤 **Voice Recording Option:**")
+        audio_value = st.audio_input("Click to record a voice note")
+        
+        if audio_value:
+            st.success("✓ Audio recorded! You can type additional notes below or save the audio note.")
+            # Store audio in session state for later use
+            if 'recorded_audio' not in st.session_state:
+                st.session_state.recorded_audio = audio_value
+
+            
             note_text = st.text_area(
                 "Add your note:",
                 height=150,
@@ -125,15 +137,14 @@ def main():
             ):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
-                elif not note_text.strip():
-                    st.error("Please enter a note.")
-                else:
+                elif (not note_text.strip() and not audio_value):
+                    st.error("Please enter a note or record an audio note.")                else:
                     if key not in notes_data:
                         notes_data[key] = []
                     notes_data[key].append(
                         {
                             "staff": staff_name.strip(),
-                            "note": note_text.strip(),
+                            "note": ("🎤 [Audio Note] " + note_text.strip()) if audio_value else note_text.strip(),
                             "time": datetime.now().strftime(
                                 "%b %d, %Y %I:%M %p"
                             ),
