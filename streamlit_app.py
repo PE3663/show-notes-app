@@ -142,7 +142,7 @@ def main():
             # Create CSV export
             csv_buffer = io.StringIO()
             csv_writer = csv.writer(csv_buffer)
-            csv_writer.writerow(["Routine", "Notes"])
+            csv_writer.writerow(["Routine", "Notes"])]
             
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
