@@ -215,14 +215,14 @@ def main():
                         )
                 st.write(note["note"])
                       
-                                # Add delete button
-                        note_index = notes_data[key].index(note)
-                        delete_key = f"delete_{key}_{note_index}_{note['time']}"
-                        if st.button("🗑️ Delete Note", key=delete_key):
-                                if delete_note(key, note_index):
-                                        st.success("Note deleted successfully!")
-                                        st.rerun()
-                                    st.markdown("---")
+                            # Add delete button
+                    note_index = notes_data[key].index(note)
+                    delete_key = f"delete_{key}_{note_index}_{note['time']}"
+                    if st.button("🗑️ Delete Note", key=delete_key):
+                            if delete_note(key, note_index):
+                                    st.success("Note deleted successfully!")
+                                    st.rerun()
+                                st.markdown("---")
 
     st.markdown("---")
     st.markdown(
