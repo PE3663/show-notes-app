@@ -148,7 +148,7 @@ def main():
                 if num == 0:
                     continue
                     key = f"#{num}"
-                        if key in notes_data:
+                    if key in notes_data:
                                 for note in notes_data[key]:
                                     csv_writer.writerow([f"{title} - {dancers}", note['note']])            
             csv_data = csv_buffer.getvalue()
