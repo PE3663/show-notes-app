@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+from audio_recorder_streamlit import audio_recorder
 
 st.set_page_config(
     page_title="PE Show Notes 2026",
@@ -114,10 +115,23 @@ def main():
 
             # Audio recording option
             st.markdown("\U0001f3a4 **Voice Recording Option:**")
-            audio_value = st.audio_input("Record a voice note")
+            st.caption("Click the microphone icon to start recording. Click again to stop.")
+            audio_bytes = audio_recorder(
+                text="",
+                recording_color="#e74c3c",
+                neutral_color="#6c757d",
+                icon_name="microphone",
+                icon_size="2x",
+                pause_threshold=None,
+                sample_rate=44100,
+                key=f"audio_{key}",
+            )
 
-            if audio_value:
+            audio_value = None
+            if audio_bytes:
+                st.audio(audio_bytes, format="audio/wav")
                 st.success("Audio recorded! You can type additional notes below or save the audio note.")
+                audio_value = audio_bytes
 
             note_text = st.text_area(
                 "Add your note:",
@@ -182,6 +196,7 @@ def main():
                         csv_writer.writerow([f"{title} - {dancers}", note['note']])
 
             csv_data = csv_buffer.getvalue()
+
             st.download_button(
                 label="\U0001f4be Download All Notes (CSV)",
                 data=csv_data,
@@ -240,6 +255,7 @@ def main():
                             st.markdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
+
                             st.write(note["note"])
 
                             # Add delete button
