@@ -9,6 +9,19 @@ st.set_page_config(
         layout="centered",
 )
 
+# Mobile-responsive CSS to stack columns on small screens
+st.markdown("""
+<style>
+@media (max-width: 640px) {
+    [data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
 DATA_FILE = "show_notes_data.json"
 
 SHOW_ORDER = [
