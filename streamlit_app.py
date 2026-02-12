@@ -221,7 +221,7 @@ def main():
                                     if st.button("🗑️ Delete Note", key=delete_key):
                                             if delete_note(key, note_index):
                                                     st.success("Note deleted successfully!")
-                                                    st.rerun(
+                                                    st.rerun()
                                                 st.markdown("---")
 
     st.markdown("---")
