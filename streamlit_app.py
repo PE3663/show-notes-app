@@ -38,6 +38,7 @@ def delete_note(routine_key, note_index):
         return True
     return False
 
+
 def get_all_staff_names(notes_data):
     staff_names = set()
     for routine_notes in notes_data.values():
@@ -48,8 +49,11 @@ def get_all_staff_names(notes_data):
 
 def main():
     st.markdown(
-        """<h1 style='text-align:center;'>\U0001f3ad Pure Energy Dance Studio</h1>
-        <h3 style='text-align:center;'>Comp Show 2026 - Staff Notes</h3><hr>""",
+        """
+# \U0001f3ad Pure Energy Dance Studio
+### Comp Show 2026 - Staff Notes
+---
+""",
         unsafe_allow_html=True,
     )
 
@@ -81,7 +85,6 @@ def main():
         with col_right:
             if selected != "--- BREAK ---":
                 st.subheader(f"Notes for: {selected}")
-
                 key = selected.split(" - ")[0].strip()
 
                 existing = notes_data.get(key, [])
@@ -101,7 +104,9 @@ def main():
 
                 col_a, col_b = st.columns([1, 3])
                 with col_a:
-                    if st.button("\U0001f4be Save Note", type="primary", use_container_width=True):
+                    if st.button(
+                        "\U0001f4be Save Note", type="primary", use_container_width=True
+                    ):
                         if not staff_name.strip():
                             st.error("Please enter your name.")
                         elif not note_text.strip():
@@ -127,7 +132,6 @@ def main():
 
     with tab_review:
         st.subheader("All Saved Notes")
-
         notes_data = load_notes()
 
         if not notes_data:
@@ -135,94 +139,94 @@ def main():
         else:
             all_staff = get_all_staff_names(notes_data)
 
-                    # Backup/Export button
-        import csv
-        import io
+            # Backup/Export button
+            import csv
+            import io
 
-        # Create CSV export
-        csv_buffer = io.StringIO()
-        csv_writer = csv.writer(csv_buffer)
-        csv_writer.writerow(["Routine", "Notes"])
+            # Create CSV export
+            csv_buffer = io.StringIO()
+            csv_writer = csv.writer(csv_buffer)
+            csv_writer.writerow(["Routine", "Notes"])
 
-        for num, title, dancers in SHOW_ORDER:
-            if num == 0:
-                continue
-            key = f"#{num}"
-            if key in notes_data:
-                for note in notes_data[key]:
-                    csv_writer.writerow([f"{title} - {dancers}", note['note']])
-        csv_data = csv_buffer.getvalue()
-
-        st.download_button(
-            label="\U0001f4be Download All Notes (CSV)",
-            data=csv_data,
-            file_name=f"show_notes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
-            help="Download all notes as a CSV file for backup"
-        )
-        st.markdown("---")
-                        
-            
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            staff_filter_options = ["All Staff"] + all_staff
-            selected_staff = st.selectbox(
-                "\U0001f464 Filter by Staff:",
-                staff_filter_options,
-                index=0,
-            )
-        
-        with col2:
-            search = st.text_input(
-                "\U0001f50d Search notes:",
-                placeholder="Search by routine, dancer, or note content..."
-            )
-
-        for num, title, dancers in SHOW_ORDER:
-            if num == 0:
-                st.markdown("---")
-                st.markdown("### \U00002615 BREAK")
-                st.markdown("---")
-                continue
-                
-            key = f"#{num}"
-            if key in notes_data and notes_data[key]:
-                filtered_notes = notes_data[key]
-                if selected_staff != "All Staff":
-                    filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-                
-                if not filtered_notes:
+            for num, title, dancers in SHOW_ORDER:
+                if num == 0:
                     continue
-                
-                display_label = f"#{num} - {title} ({dancers})"
-                
-                if search:
-                    search_lower = search.lower()
-                    match = search_lower in display_label.lower()
-                    if not match:
-                        for n in filtered_notes:
-                            if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
-                                match = True
-                                break
-                    if not match:
+                key = f"#{num}"
+                if key in notes_data:
+                    for note in notes_data[key]:
+                        csv_writer.writerow([f"{title} - {dancers}", note['note']])
+
+            csv_data = csv_buffer.getvalue()
+
+            st.download_button(
+                label="\U0001f4be Download All Notes (CSV)",
+                data=csv_data,
+                file_name=f"show_notes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                help="Download all notes as a CSV file for backup"
+            )
+            st.markdown("---")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                staff_filter_options = ["All Staff"] + all_staff
+                selected_staff = st.selectbox(
+                    "\U0001f464 Filter by Staff:",
+                    staff_filter_options,
+                    index=0,
+                )
+
+            with col2:
+                search = st.text_input(
+                    "\U0001f50d Search notes:",
+                    placeholder="Search by routine, dancer, or note content..."
+                )
+
+            for num, title, dancers in SHOW_ORDER:
+                if num == 0:
+                    st.markdown("---")
+                    st.markdown("### \U00002615 BREAK")
+                    st.markdown("---")
+                    continue
+
+                key = f"#{num}"
+                if key in notes_data and notes_data[key]:
+                    filtered_notes = notes_data[key]
+                    if selected_staff != "All Staff":
+                        filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
+
+                    if not filtered_notes:
                         continue
 
-                with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
-                    for note in filtered_notes:
-                        st.markdown(
-                            f"**{note['staff']}** - *{note['time']}*"
-                        )
-                        st.write(note["note"])
-                      
-                                # Add delete button
-                        note_index = notes_data[key].index(note)
-                        delete_key = f"delete_{key}_{note_index}_{note['time']}"
-                        if st.button("🗑️ Delete Note", key=delete_key):
+                    display_label = f"#{num} - {title} ({dancers})"
+
+                    if search:
+                        search_lower = search.lower()
+                        match = search_lower in display_label.lower()
+                        if not match:
+                            for n in filtered_notes:
+                                if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
+                                    match = True
+                                    break
+                        if not match:
+                            continue
+
+                    with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
+                        for note in filtered_notes:
+                            st.markdown(
+                                f"**{note['staff']}** - *{note['time']}*"
+                            )
+                            st.write(note["note"])
+
+                            # Add delete button
+                            note_index = notes_data[key].index(note)
+                            delete_key = f"delete_{key}_{note_index}_{note['time']}"
+                            if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
                                 if delete_note(key, note_index):
-                                        st.success("Note deleted successfully!")
-                                        st.rerun()
-                                    st.markdown("---")
+                                    st.success("Note deleted successfully!")
+                                    st.rerun()
+                            st.markdown("---")
 
     st.markdown("---")
     st.markdown(
