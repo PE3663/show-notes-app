@@ -163,66 +163,66 @@ def main():
         st.markdown("---")
                         
             
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                staff_filter_options = ["All Staff"] + all_staff
-                selected_staff = st.selectbox(
-                    "\U0001f464 Filter by Staff:",
-                    staff_filter_options,
-                    index=0,
-                )
-            
-            with col2:
-                search = st.text_input(
-                    "\U0001f50d Search notes:",
-                    placeholder="Search by routine, dancer, or note content..."
-                )
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            staff_filter_options = ["All Staff"] + all_staff
+            selected_staff = st.selectbox(
+                "\U0001f464 Filter by Staff:",
+                staff_filter_options,
+                index=0,
+            )
+        
+        with col2:
+            search = st.text_input(
+                "\U0001f50d Search notes:",
+                placeholder="Search by routine, dancer, or note content..."
+            )
 
-            for num, title, dancers in SHOW_ORDER:
-                if num == 0:
-                    st.markdown("---")
-                    st.markdown("### \U00002615 BREAK")
-                    st.markdown("---")
+        for num, title, dancers in SHOW_ORDER:
+            if num == 0:
+                st.markdown("---")
+                st.markdown("### \U00002615 BREAK")
+                st.markdown("---")
+                continue
+                
+            key = f"#{num}"
+            if key in notes_data and notes_data[key]:
+                filtered_notes = notes_data[key]
+                if selected_staff != "All Staff":
+                    filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
+                
+                if not filtered_notes:
                     continue
-                    
-                key = f"#{num}"
-                if key in notes_data and notes_data[key]:
-                    filtered_notes = notes_data[key]
-                    if selected_staff != "All Staff":
-                        filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-                    
-                    if not filtered_notes:
+                
+                display_label = f"#{num} - {title} ({dancers})"
+                
+                if search:
+                    search_lower = search.lower()
+                    match = search_lower in display_label.lower()
+                    if not match:
+                        for n in filtered_notes:
+                            if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
+                                match = True
+                                break
+                    if not match:
                         continue
-                    
-                    display_label = f"#{num} - {title} ({dancers})"
-                    
-                    if search:
-                        search_lower = search.lower()
-                        match = search_lower in display_label.lower()
-                        if not match:
-                            for n in filtered_notes:
-                                if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
-                                    match = True
-                                    break
-                        if not match:
-                            continue
 
-                    with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
-                        for note in filtered_notes:
-                            st.markdown(
-                                f"**{note['staff']}** - *{note['time']}*"
-                            )
-                    st.write(note["note"])
-                          
-                                            # Add delete button
-                                    note_index = notes_data[key].index(note)
-                                    delete_key = f"delete_{key}_{note_index}_{note['time']}"
-                                    if st.button("🗑️ Delete Note", key=delete_key):
-                                            if delete_note(key, note_index):
-                                                    st.success("Note deleted successfully!")
-                                                    st.rerun()
-                                                st.markdown("---")
+                with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
+                    for note in filtered_notes:
+                        st.markdown(
+                            f"**{note['staff']}** - *{note['time']}*"
+                        )
+                st.write(note["note"])
+                      
+                                        # Add delete button
+                                note_index = notes_data[key].index(note)
+                                delete_key = f"delete_{key}_{note_index}_{note['time']}"
+                                if st.button("🗑️ Delete Note", key=delete_key):
+                                        if delete_note(key, note_index):
+                                                st.success("Note deleted successfully!")
+                                                st.rerun()
+                                            st.markdown("---")
 
     st.markdown("---")
     st.markdown(
