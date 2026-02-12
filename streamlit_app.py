@@ -137,10 +137,10 @@ def main():
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
                     continue
-                key = f"#{num}"
-                if key in notes_data:
-                    for note in notes_data[key]:
-                    csv_writer.writerow([f"{title} - {dancers}", note['note']])            
+                        key = f"#{num}"
+                        if key in notes_data:
+                                for note in notes_data[key]:
+                                    csv_writer.writerow([f"{title} - {dancers}", note['note']])            
             csv_data = csv_buffer.getvalue()
             
             st.download_button(
