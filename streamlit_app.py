@@ -136,7 +136,7 @@ def main():
             
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
-                    continue
+                    continue)
                 key = f"#{num}"
                 if key in notes_data:
                     for note in notes_data[key]:
