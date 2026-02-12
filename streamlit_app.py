@@ -132,11 +132,11 @@ def main():
             # Create CSV export
             csv_buffer = io.StringIO()
             csv_writer = csv.writer(csv_buffer)
-            csv_writer.writerow(["Routine", "Notes"]
+            csv_writer.writerow(["Routine", "Notes"])
             
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
-                    continue)
+                    continu)
                 key = f"#{num}"
                 if key in notes_data:
                     for note in notes_data[key]:
