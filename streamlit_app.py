@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-from audio_recorder_streamlit import audio_recorder
+from streamlit_mic_recorder import speech_to_text
 
 st.set_page_config(
     page_title="PE Show Notes 2026",
@@ -69,10 +69,10 @@ def get_all_staff_names(notes_data):
 def main():
     st.markdown(
         """
-        # \U0001f3ad Pure Energy Dance Studio
-        ### Comp Show 2026 - Staff Notes
-        ---
-        """,
+# \U0001f3ad Pure Energy Dance Studio
+### Comp Show 2026 - Staff Notes
+---
+""",
         unsafe_allow_html=True,
     )
 
@@ -104,8 +104,8 @@ def main():
         if selected != "--- BREAK ---":
             st.subheader(f"Notes for: {selected}")
             key = selected.split(" - ")[0].strip()
-            existing = notes_data.get(key, [])
 
+            existing = notes_data.get(key, [])
             if existing:
                 st.markdown("**Previous Notes:**")
                 for note in existing:
@@ -113,58 +113,60 @@ def main():
                         f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
                     )
 
-            # Audio recording option
-            st.markdown("\U0001f3a4 **Voice Recording Option:**")
-            st.caption("Click the microphone icon to start recording. Click again to stop.")
-            audio_bytes = audio_recorder(
-                text="",
-                recording_color="#e74c3c",
-                neutral_color="#6c757d",
-                icon_name="microphone",
-                icon_size="2x",
-                pause_threshold=None,
-                sample_rate=44100,
-                key=f"audio_{key}",
+            # Speech-to-text option
+            st.markdown("\U0001f3a4 **Voice to Text:**")
+            st.caption("Click Start to speak your note. Click Stop when done. Your speech will fill the note box below.")
+
+            stt_key = f"stt_{key}"
+            transcribed_text = speech_to_text(
+                language="en",
+                start_prompt="\U0001f3a4 Start Recording",
+                stop_prompt="\U0001f534 Stop Recording",
+                just_once=False,
+                use_container_width=True,
+                key=stt_key,
             )
 
-            audio_value = None
-            if audio_bytes:
-                st.audio(audio_bytes, format="audio/wav")
-                st.success("Audio recorded! You can type additional notes below or save the audio note.")
-                audio_value = audio_bytes
+            # If speech was transcribed, store it in session state for the text area
+            if transcribed_text:
+                st.session_state[f"voice_{key}"] = transcribed_text
+
+            # Get any previously transcribed text
+            default_note = st.session_state.get(f"voice_{key}", "")
 
             note_text = st.text_area(
                 "Add your note:",
+                value=default_note,
                 height=150,
-                placeholder="Type your notes about this routine here...",
+                placeholder="Type your notes or use the mic button above to speak...",
                 key=f"note_{key}",
             )
 
             if st.button(
-                "\U0001f4be Save Note",
-                type="primary",
-                use_container_width=True
+                "\U0001f4be Save Note", type="primary", use_container_width=True
             ):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
-                elif (not note_text.strip() and not audio_value):
-                    st.error("Please enter a note or record an audio note.")
+                elif not note_text.strip():
+                    st.error("Please enter a note or use the microphone to record one.")
                 else:
                     if key not in notes_data:
                         notes_data[key] = []
                     notes_data[key].append(
                         {
                             "staff": staff_name.strip(),
-                            "note": ("\U0001f3a4 [Audio Note] " + note_text.strip()) if audio_value else note_text.strip(),
+                            "note": note_text.strip(),
                             "time": datetime.now().strftime(
                                 "%b %d, %Y %I:%M %p"
                             ),
                         }
                     )
                     save_notes(notes_data)
+                    # Clear the voice transcription from session state
+                    if f"voice_{key}" in st.session_state:
+                        del st.session_state[f"voice_{key}"]
                     st.success("Note saved!")
                     st.rerun()
-
         else:
             st.subheader("\U00002615 Intermission Break")
             st.write("No notes needed for the break.")
@@ -230,10 +232,8 @@ def main():
                 key = f"#{num}"
                 if key in notes_data and notes_data[key]:
                     filtered_notes = notes_data[key]
-
                     if selected_staff != "All Staff":
                         filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-
                     if not filtered_notes:
                         continue
 
@@ -255,7 +255,6 @@ def main():
                             st.markdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
-
                             st.write(note["note"])
 
                             # Add delete button
@@ -266,11 +265,11 @@ def main():
                                     st.success("Note deleted successfully!")
                                     st.rerun()
 
-                        st.markdown("---")
+                            st.markdown("---")
 
     st.markdown("---")
     st.markdown(
-        "<p style='text-align:center; color:gray;'>Pure Energy Dance Studio - Comp Show 2026</p>",
+        "<p style='text-align: center; color: gray;'>Pure Energy Dance Studio - Comp Show 2026</p>",
         unsafe_allow_html=True,
     )
 
