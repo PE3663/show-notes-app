@@ -11,6 +11,13 @@ st.set_page_config(
 
 DATA_FILE = "show_notes_data.json"
 
+# Admin users who can see all notes
+ADMIN_USERS = ["Sheila", "Sheila Nagy", "Jim", "Jim Nagy"]
+
+def is_admin(staff_name):
+    """Check if the staff member is an admin who can see all notes."""
+    return staff_name.strip() in ADMIN_USERS
+
 SHOW_ORDER = [
     (1, "Footloose", "Large Tap Group"), (2, "Poison", "Daytona Hip Hop"), (3, "Dark Outside", "Isabella Acro"), (4, "Glow In The Dark", "Ellie Lyrical"),
     (5, "The Water Lillies", "Clara Hadley Naomi Ballet"), (6, "Mambo Italiano", "Skittles Jazz"), (7, "The Phoenix", "Kristyn Pointe"), (8, "When Falling Stars Fly", "Addison Contemp"),
@@ -98,6 +105,8 @@ def main():
         )
 
         staff_name = st.text_input("Your Name:", placeholder="Enter your name")
+                if staff_name:
+            st.session_state['staff_name'] = staff_name
 
         # Notes section now stacks below instead of side-by-side
         if selected != "--- BREAK ---":
@@ -185,6 +194,12 @@ def main():
 
             # Filters now stack vertically for mobile instead of side-by-side
             staff_filter_options = ["All Staff"] + all_staff
+                    
+        # Get current user's name from the enter notes tab
+        if 'staff_name' in st.session_state:
+            current_user = st.session_state['staff_name']
+        else:
+            current_user = ""
             selected_staff = st.selectbox(
                 "\U0001f464 Filter by Staff:",
                 staff_filter_options,
@@ -206,8 +221,12 @@ def main():
                 key = f"#{num}"
                 if key in notes_data and notes_data[key]:
                     filtered_notes = notes_data[key]
-                    if selected_staff != "All Staff":
-                        filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
+                                       # Apply filtering based on admin status
+                if current_user and not is_admin(current_user):
+                    # Non-admin users can only see their own notes
+                    filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
+                elif selected_staff != "All Staff":
+                    # Admin users can filter by staff member
                     if not filtered_notes:
                         continue
 
