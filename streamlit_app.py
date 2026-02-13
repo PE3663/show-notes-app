@@ -179,24 +179,24 @@ def main():
                 key = f"#{num}"
             if key in notes_data:
                 
-                # Get current user's name from the enter notes tab
-                if 'staff_name' in st.session_state:
-                    current_user = st.session_state['staff_name']
-                else:
-                    current_user = ""
-                
-                filtered_notes = notes_data[key]
-                
-                # Apply filtering based on admin status
-                if current_user and not is_admin(current_user):
-                    # Non-admin users can only see their own notes
-                    filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
-                
-                if not filtered_notes:
-                    continue
-                
-                for note in filtered_notes:
-                        csv_writer.writerow([f"{title} - {dancers}", note['note']])
+                    # Get current user's name from the enter notes tab
+                    if 'staff_name' in st.session_state:
+                        current_user = st.session_state['staff_name']
+                    else:
+                        current_user = ""
+                    
+                    filtered_notes = notes_data[key]
+                    
+                    # Apply filtering based on admin status
+                    if current_user and not is_admin(current_user):
+                        # Non-admin users can only see their own notes
+                        filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
+                    
+                    if not filtered_notes:
+                        continue
+                    
+                    for note in filtered_notes:
+                            csv_writer.writerow([f"{title} - {dancers}", note['note']])
 
             csv_data = csv_buffer.getvalue()
 
