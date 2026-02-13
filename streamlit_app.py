@@ -158,5 +158,4 @@ def main():
                     st.markdown("**Previous Notes:**")
                     for note in existing:
                         st.info(f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}")
-                                            note_text = st.text_area("Add your note:", height=150, placeholder="Type your notes about this routine here...", key=f"note_{key}")
-
+            note_text = st.text_area("Add your note:", height=150, placeholder="Type your notes about this routine here...", key=f"note_{key}")
