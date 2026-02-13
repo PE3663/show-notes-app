@@ -105,7 +105,7 @@ def main():
         )
 
         staff_name = st.text_input("Your Name:", placeholder="Enter your name")
-                if staff_name:
+    if staff_name:
             st.session_state['staff_name'] = staff_name
 
         # Notes section now stacks below instead of side-by-side
