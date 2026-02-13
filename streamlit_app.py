@@ -151,7 +151,7 @@ def main():
                     save_notes(notes_data)
                     st.success("Note saved!")
                     st.rerun()
-        else:
+    else:
             st.subheader("\U00002615 Intermission Break")
             st.write("No notes needed for the break.")
 
