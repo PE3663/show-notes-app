@@ -161,19 +161,20 @@ def main():
                     for note in existing:
                         st.info(f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}")
 
-                                # Voice-to-text input
-                                st.markdown("**🎤 Voice Input:** Click to record, click again to stop")
-                                voice_text = speech_to_text(language='en', use_container_width=True, just_once=True, key=f'voice_{key}')
+                            # Voice-to-text input
+                            st.markdown("**🎤 Voice Input:** Click to record, click again to stop")
+                            voice_text = speech_to_text(language='en', use_container_width=True, just_once=True, key=f'voice_{key}')
 
-                                # Initialize or update note content with voice input
-                                if f'note_content_{key}' not in st.session_state:
-                    st.session_state[f'note_content_{key}'] = ''
+                            # Initialize or update note content with voice input
+                            if f'note_content_{key}' not in st.session_state:
+                                                st.session_state[f'note_content_{key}'] = ''
 
-                                if voice_text:
-                                                        if st.session_state[f'note_content_{key}']:
-                                                                                    st.session_state[f'note_content_{key}'] += ' ' + voice_text
-                                                                                else:
-                                                                                                            st.session_state[f'note_content_{key}'] = voice_text
+                            if voice_text:
+                                                if st.session_state[f'note_content_{key}']:
+                                                                        st.session_state[f'note_content_{key}'] += ' ' + voice_text
+                                                                    else:
+                                                                                            st.session_state[f'note_content_{key}'] = voice_text
+
                 note_text = st.text_area("Add your note:", height=150, value=st.session_state[f'note_content_{key}'], placeholder="Type your notes about this routine here...", key=f"note_{key}")
                                 st.session_state[f'note_content_{key}'] = note_text  # Update session state with text_area contentif st.button("\U0001f4be Save Note", type="primary", use_container_width=True):
                     if not staff_name.strip():
