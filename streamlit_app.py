@@ -232,8 +232,6 @@ def main():
                     if not filtered_notes:
                         continue
 
-                                        # Admin users can filter by staff member
-                    filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
                     display_label = f"#{num} - {title} ({dancers})"
 
                     if search:
