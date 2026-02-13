@@ -2,7 +2,13 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-from streamlit_mic_recorder import speech_to_text
+
+# Try to import speech_to_text, but make it optional for mobile compatibility
+try:
+    from streamlit_mic_recorder import speech_to_text
+    HAS_SPEECH_TO_TEXT = True
+except:
+    HAS_SPEECH_TO_TEXT = False
 
 st.set_page_config(
     page_title="PE Show Notes 2026",
@@ -113,32 +119,25 @@ def main():
                         f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
                     )
 
-            # Speech-to-text option
-            st.markdown("\U0001f3a4 **Voice to Text:**")
-            st.caption("Click Start to speak your note. Click Stop when done. Your speech will fill the note box below.")
+            # Voice recording option - use native audio_input as it works on all devices
+            st.markdown("\U0001f3a4 **Voice Recording Option:**")
+            st.caption("Record audio notes using your device microphone (works on all devices including iPhone).")
 
-            stt_key = f"stt_{key}"
-            transcribed_text = speech_to_text(
-                language="en",
-                start_prompt="\U0001f3a4 Start Recording",
-                stop_prompt="\U0001f534 Stop Recording",
-                just_once=False,
-                use_container_width=True,
-                key=stt_key,
+            audio_file = st.audio_input(
+                "Click to record audio note",
+                key=f"audio_{key}"
             )
 
-            # If speech was transcribed, store it in session state for the text area
-            if transcribed_text:
-                st.session_state[f"voice_{key}"] = transcribed_text
-
-            # Get any previously transcribed text
-            default_note = st.session_state.get(f"voice_{key}", "")
+            audio_note_indicator = ""
+            if audio_file:
+                st.audio(audio_file)
+                st.success("Audio recorded! This will be saved with your note.")
+                audio_note_indicator = "\U0001f3a4 [Audio Note] "
 
             note_text = st.text_area(
                 "Add your note:",
-                value=default_note,
                 height=150,
-                placeholder="Type your notes or use the mic button above to speak...",
+                placeholder="Type your notes here...",
                 key=f"note_{key}",
             )
 
@@ -147,24 +146,21 @@ def main():
             ):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
-                elif not note_text.strip():
-                    st.error("Please enter a note or use the microphone to record one.")
+                elif not note_text.strip() and not audio_file:
+                    st.error("Please enter a note or record an audio note.")
                 else:
                     if key not in notes_data:
                         notes_data[key] = []
                     notes_data[key].append(
                         {
                             "staff": staff_name.strip(),
-                            "note": note_text.strip(),
+                            "note": audio_note_indicator + note_text.strip(),
                             "time": datetime.now().strftime(
                                 "%b %d, %Y %I:%M %p"
                             ),
                         }
                     )
                     save_notes(notes_data)
-                    # Clear the voice transcription from session state
-                    if f"voice_{key}" in st.session_state:
-                        del st.session_state[f"voice_{key}"]
                     st.success("Note saved!")
                     st.rerun()
         else:
