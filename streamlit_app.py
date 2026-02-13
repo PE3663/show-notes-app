@@ -178,8 +178,6 @@ def main():
                     continue
                 key = f"#{num}"
             if key in notes_data:
-                for note in notes_data[key]:
-                                            # Apply filtering based on admin status
                 
                 # Get current user's name from the enter notes tab
                 if 'staff_name' in st.session_state:
