@@ -232,7 +232,7 @@ def main():
                 if not filtered_notes:
                         continue
 
-                    display_label = f"#{num} - {title} ({dancers})"
+                display_label = f"#{num} - {title} ({dancers})"
 
                     if search:
                         search_lower = search.lower()
