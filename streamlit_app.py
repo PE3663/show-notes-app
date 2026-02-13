@@ -4,6 +4,7 @@ import os
 import csv
 import io
 from datetime import datetime
+from streamlit_mic_recorder import speech_to_text
 
 st.set_page_config(
     page_title="PE Show Notes",
@@ -159,8 +160,22 @@ def main():
                     st.markdown("**Previous Notes:**")
                     for note in existing:
                         st.info(f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}")
-                note_text = st.text_area("Add your note:", height=150, placeholder="Type your notes about this routine here...", key=f"note_{key}")
-                if st.button("\U0001f4be Save Note", type="primary", use_container_width=True):
+
+                                # Voice-to-text input
+                                st.markdown("**🎤 Voice Input:** Click to record, click again to stop")
+                                voice_text = speech_to_text(language='en', use_container_width=True, just_once=True, key=f'voice_{key}')
+
+                                # Initialize or update note content with voice input
+                                if f'note_content_{key}' not in st.session_state:
+                    st.session_state[f'note_content_{key}'] = ''
+
+                                if voice_text:
+                                                        if st.session_state[f'note_content_{key}']:
+                                                                                    st.session_state[f'note_content_{key}'] += ' ' + voice_text
+                                                                                else:
+                                                                                                            st.session_state[f'note_content_{key}'] = voice_text
+                note_text = st.text_area("Add your note:", height=150, value=st.session_state[f'note_content_{key}'], placeholder="Type your notes about this routine here...", key=f"note_{key}")
+                                st.session_state[f'note_content_{key}'] = note_text  # Update session state with text_area contentif st.button("\U0001f4be Save Note", type="primary", use_container_width=True):
                     if not staff_name.strip():
                         st.error("Please enter your name.")
                     elif not note_text.strip():
@@ -171,6 +186,7 @@ def main():
                         notes_data[key].append({"staff": staff_name.strip(), "note": note_text.strip(), "time": datetime.now().strftime("%b %d, %Y %I:%M %p")})
                         save_notes(selected_show, notes_data)
                         st.success("Note saved!")
+                                            st.session_state[f'note_content_{key}'] = ''  # Clear after saving
                         st.rerun()
             else:
                 st.subheader("\U00002615 Intermission Break")
