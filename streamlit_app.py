@@ -240,15 +240,6 @@ def main():
                         match = search_lower in display_label.lower()
                         if not match:
                             for n in filtered_notes:
-                                            search_lower = search.lower()
-            match = search_lower in display_label.lower()
-            if not match:
-                for n in filtered_notes:
-                    if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
-                        match = True
-                        break
-            if not match:
-                continuearkdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
                             st.write(note["note"])
