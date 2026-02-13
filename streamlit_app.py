@@ -113,10 +113,48 @@ def main():
                     )
 
             note_text = st.text_area(
+
+                            # Speech-to-text input
+            st.markdown("**🎤 Voice Input:**")
+            audio_value = st.audio_input("Record your note", key=f"audio_{key}")
+            
+            if audio_value:
+                # Save audio to temporary file for processing
+                import tempfile
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+                    tmp_file.write(audio_value.getvalue())
+                    audio_path = tmp_file.name
+                
+                try:
+                    # Use speech_recognition library
+                    import speech_recognition as sr
+                    recognizer = sr.Recognizer()
+                    with sr.AudioFile(audio_path) as source:
+                        audio_data = recognizer.record(source)
+                        try:
+                            text = recognizer.recognize_google(audio_data)
+                            st.success(f"Transcribed: {text}")
+                            # Update note_text session state
+                            if f"note_{key}" not in st.session_state:
+                                st.session_state[f"note_{key}"] = text
+                            else:
+                                st.session_state[f"note_{key}"] += " " + text
+                        except sr.UnknownValueError:
+                            st.error("Could not understand audio")
+                        except sr.RequestError:
+                            st.error("Could not request results from speech recognition service")
+                finally:
+                    # Clean up temp file
+                    import os
+                    if os.path.exists(audio_path):
+                        os.remove(audio_path)
+
+note_text = st.text_area(
                 "Add your note:",
                 height=150,
                 placeholder="Type your notes about this routine here...",
                 key=f"note_{key}",
+                value=st.session_state.get(f"note_{key}", ""),
             )
 
             if st.button(
