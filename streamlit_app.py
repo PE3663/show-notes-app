@@ -4,7 +4,6 @@ import os
 import csv
 import io
 from datetime import datetime
-from streamlit_mic_recorder import speech_to_text
 
 st.set_page_config(
     page_title="PE Show Notes",
