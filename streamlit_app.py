@@ -3,13 +3,6 @@ import json
 import os
 from datetime import datetime
 
-# Try to import speech_to_text, but make it optional for mobile compatibility
-try:
-    from streamlit_mic_recorder import speech_to_text
-    HAS_SPEECH_TO_TEXT = True
-except:
-    HAS_SPEECH_TO_TEXT = False
-
 st.set_page_config(
     page_title="PE Show Notes 2026",
     page_icon="\U0001f3ad",
@@ -119,25 +112,10 @@ def main():
                         f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
                     )
 
-            # Voice recording option - use native audio_input as it works on all devices
-            st.markdown("\U0001f3a4 **Voice Recording Option:**")
-            st.caption("Record audio notes using your device microphone (works on all devices including iPhone).")
-
-            audio_file = st.audio_input(
-                "Click to record audio note",
-                key=f"audio_{key}"
-            )
-
-            audio_note_indicator = ""
-            if audio_file:
-                st.audio(audio_file)
-                st.success("Audio recorded! This will be saved with your note.")
-                audio_note_indicator = "\U0001f3a4 [Audio Note] "
-
             note_text = st.text_area(
                 "Add your note:",
                 height=150,
-                placeholder="Type your notes here...",
+                placeholder="Type your notes about this routine here...",
                 key=f"note_{key}",
             )
 
@@ -146,15 +124,15 @@ def main():
             ):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
-                elif not note_text.strip() and not audio_file:
-                    st.error("Please enter a note or record an audio note.")
+                elif not note_text.strip():
+                    st.error("Please enter a note.")
                 else:
                     if key not in notes_data:
                         notes_data[key] = []
                     notes_data[key].append(
                         {
                             "staff": staff_name.strip(),
-                            "note": audio_note_indicator + note_text.strip(),
+                            "note": note_text.strip(),
                             "time": datetime.now().strftime(
                                 "%b %d, %Y %I:%M %p"
                             ),
