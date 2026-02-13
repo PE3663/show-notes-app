@@ -232,13 +232,13 @@ def main():
             )
 
             for num, title, dancers in SHOW_ORDER:
-                if num == 0:
-                    st.markdown("---")
-                    st.markdown("### \U00002615 BREAK")
-                    st.markdown("---")
-                    continue
+                    if num == 0:
+                        st.markdown("---")
+                        st.markdown("### \U00002615 BREAK")
+                        st.markdown("---")
+                        continue
 
-                        key = f"#{num}"
+                    key = f"#{num}"
                         if key in notes_data and notes_data[key]:
                                 filtered_notes = notes_data[key]
                                        # Apply filtering based on admin status
