@@ -182,6 +182,7 @@ def main():
                     elif not note_text.strip():
                         st.error("Please enter a note.")
                         
+                        
                     else:
                         if key not in notes_data:
                             notes_data[key] = []
