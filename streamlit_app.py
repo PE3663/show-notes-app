@@ -240,15 +240,15 @@ def main():
                         match = search_lower in display_label.lower()
                         if not match:
                             for n in filtered_notes:
-                                if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
-                                    match = True
-                                    break
-                        if not match:
-                            continue
-
-                    with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
-                        for note in filtered_notes:
-                            st.markdown(
+                                            search_lower = search.lower()
+            match = search_lower in display_label.lower()
+            if not match:
+                for n in filtered_notes:
+                    if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
+                        match = True
+                        break
+            if not match:
+                continuearkdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
                             st.write(note["note"])
