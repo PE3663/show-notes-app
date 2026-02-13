@@ -174,11 +174,11 @@ def main():
             csv_writer.writerow(["Routine", "Notes"])
 
             for num, title, dancers in SHOW_ORDER:
-                if num == 0:
-                    continue
+            if num == 0:
+                continue
                 key = f"#{num}"
-                if key in notes_data:
-                    for note in notes_data[key]:
+            if key in notes_data:
+                for note in notes_data[key]:
                                         # Apply filtering based on admin status
                 
                 # Get current user's name from the enter notes tab
