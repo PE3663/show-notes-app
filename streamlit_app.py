@@ -106,20 +106,20 @@ def main():
 
         staff_name = st.text_input("Your Name:", placeholder="Enter your name")
         if staff_name:
-                st.session_state['staff_name'] = staff_name
+                    st.session_state['staff_name'] = staff_name
 
             # Notes section now stacks below instead of side-by-side
-    
-            if selected != "--- BREAK ---":
-                st.subheader(f"Notes for: {selected}")
-                key = selected.split(" - ")[0].strip()
+        
+        if selected != "--- BREAK ---":
+            st.subheader(f"Notes for: {selected}")
+            key = selected.split(" - ")[0].strip()
 
-                existing = notes_data.get(key, [])
-                if existing:
-                        st.markdown("**Previous Notes:**")
-                            for note in existing:
-                                    st.info(
-                                            f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
+            existing = notes_data.get(key, [])
+            if existing:
+                st.markdown("**Previous Notes:**")
+                for note in existing:
+                    st.info(
+                        f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}"
                                     )
 
             note_text = st.text_area(
