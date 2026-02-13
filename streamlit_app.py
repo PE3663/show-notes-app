@@ -110,7 +110,7 @@ def main():
 
         # Notes section now stacks below instead of side-by-side
     
-    if selected != "--- BREAK ---":
+        if selected != "--- BREAK ---":
             st.subheader(f"Notes for: {selected}")
             key = selected.split(" - ")[0].strip()
 
@@ -151,7 +151,7 @@ def main():
                     save_notes(notes_data)
                     st.success("Note saved!")
                     st.rerun()
-    else:
+        else:
             st.subheader("\U00002615 Intermission Break")
             st.write("No notes needed for the break.")
 
@@ -179,6 +179,25 @@ def main():
                 key = f"#{num}"
                 if key in notes_data:
                     for note in notes_data[key]:
+                                        # Apply filtering based on admin status
+                
+                # Get current user's name from the enter notes tab
+                if 'staff_name' in st.session_state:
+                    current_user = st.session_state['staff_name']
+                else:
+                    current_user = ""
+                
+                filtered_notes = notes_data[key]
+                
+                # Apply filtering based on admin status
+                if current_user and not is_admin(current_user):
+                    # Non-admin users can only see their own notes
+                    filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
+                
+                if not filtered_notes:
+                    continue
+                
+                for note in filtered_notes:
                         csv_writer.writerow([f"{title} - {dancers}", note['note']])
 
             csv_data = csv_buffer.getvalue()
@@ -219,27 +238,35 @@ def main():
                     st.markdown("---")
                     continue
 
-                key = f"#{num}"
-                if key in notes_data and notes_data[key]:
-                    filtered_notes = notes_data[key]
+                        key = f"#{num}"
+                        if key in notes_data and notes_data[key]:
+                                filtered_notes = notes_data[key]
                                        # Apply filtering based on admin status
-                if current_user and not is_admin(current_user):
-                    # Non-admin users can only see their own notes
-                    filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
-                elif selected_staff != "All Staff":
-                    # Admin users can filter by staff member
+                            if current_user and not is_admin(current_user):
+                                    # Non-admin users can only see their own notes
+                                    filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
+                            elif selected_staff != "All Staff":
+                                    # Admin users can filter by staff member
                                         filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-                if not filtered_notes:
+                    if not filtered_notes:
                         continue
 
-                display_label = f"#{num} - {title} ({dancers})"
+                    display_label = f"#{num} - {title} ({dancers})"
 
-                if search:
-                    
-                                        search_lower = search.lower()
+                    if search:
+                        search_lower = search.lower()
                         match = search_lower in display_label.lower()
                         if not match:
                             for n in filtered_notes:
+                                if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
+                                    match = True
+                                    break
+                        if not match:
+                            continue
+
+                    with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
+                        for note in filtered_notes:
+                            st.markdown(
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
                             st.write(note["note"])
