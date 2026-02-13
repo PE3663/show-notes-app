@@ -109,7 +109,7 @@ def main():
             st.session_state['staff_name'] = staff_name
 
         # Notes section now stacks below instead of side-by-side
-        if selected != "---- BREAK ----":
+    
         if selected != "--- BREAK ---":
             st.subheader(f"Notes for: {selected}")
             key = selected.split(" - ")[0].strip()
