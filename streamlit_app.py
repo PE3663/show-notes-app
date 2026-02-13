@@ -174,7 +174,7 @@ def main():
             csv_writer.writerow(["Routine", "Notes"])
 
             for num, title, dancers in SHOW_ORDER:
-            if num == 0:
+                if num == 0:
                 continue
                 key = f"#{num}"
             if key in notes_data:
