@@ -4,6 +4,7 @@ import os
 import csv
 import io
 from datetime import datetime
+from streamlit_mic_recorder import speech_to_text
 
 st.set_page_config(
     page_title="PE Show Notes",
@@ -161,147 +162,15 @@ def main():
                         st.info(f"**{note['staff']}** ({note['time']}):\\n\\n{note['note']}")
 
                             # Voice-to-text input
-                                            st.markdown("**🎤 Voice Input:** Click to record, click again to stop")
-                                            voice_text = speech_to_text(language='en', use_container_width=True, just_once=True, key=f'voice_{key}')
+            st.markdown("**🎤 Voice Input:** Click to record, click again to stop")
+            voice_text = speech_to_text(language='en', use_container_width=True, just_once=True, key=f'voice_{key}')
 
                             # Initialize or update note content with voice input
-                                            if f'note_content_{key}' not in st.session_state:
-                                                                    st.session_state[f'note_content_{key}'] = ''
+            if f'note_content_{key}' not in st.session_state:
+                st.session_state[f'note_content_{key}'] = ''
+                            if voice_text:
+                                                if st.session_state[f'note_content_{key}']:
+                                                                        st.session_state[f'note_content_{key}'] += ' ' + voice_text
+                                                                    else:
+                                                                                            st.session_state[f'note_content_{key}'] = voice_text
 
-                                            if voice_text:
-                                                                    if st.session_state[f'note_content_{key}']:
-                                                                                                st.session_state[f'note_content_{key}'] += ' ' + voice_text
-                                                                                        else:
-                                                                                                                    st.session_state[f'note_content_{key}'] = voice_text
-
-                note_text = st.text_area("Add your note:", height=150, value=st.session_state[f'note_content_{key}'], placeholder="Type your notes about this routine here...", key=f"note_{key}")
-                                st.session_state[f'note_content_{key}'] = note_text  # Update session state with text_area contentif st.button("\U0001f4be Save Note", type="primary", use_container_width=True):
-                    if not staff_name.strip():
-                        st.error("Please enter your name.")
-                    elif not note_text.strip():
-                        st.error("Please enter a note.")
-                        
-                        
-                    else:
-                        if key not in notes_data:
-                            notes_data[key] = []
-                        notes_data[key].append({"staff": staff_name.strip(), "note": note_text.strip(), "time": datetime.now().strftime("%b %d, %Y %I:%M %p")})
-                        save_notes(selected_show, notes_data)
-                        st.success("Note saved!")
-                                            st.session_state[f'note_content_{key}'] = ''  # Clear after saving
-                        st.rerun()
-            else:
-                st.subheader("\U00002615 Intermission Break")
-                st.write("No notes needed for the break.")
-    with tab_review:
-        st.subheader(f"All Notes - {selected_show}")
-        notes_data = load_notes(selected_show)
-        if not notes_data:
-            st.info("No notes have been saved yet.")
-        else:
-            all_staff = get_all_staff_names(notes_data)
-            csv_buffer = io.StringIO()
-            csv_writer = csv.writer(csv_buffer)
-            csv_writer.writerow(["Routine", "Staff", "Note", "Time"])
-            for num, title, dancers in show_order:
-                if num == 0:
-                    continue
-                key = f"#{num}"
-                if key in notes_data:
-                    for note in notes_data[key]:
-                        csv_writer.writerow([f"{title} - {dancers}", note['staff'], note['note'], note['time']])
-            csv_data = csv_buffer.getvalue()
-            st.download_button(label="\U0001f4be Download All Notes (CSV)", data=csv_data, file_name=f"{selected_show.replace(' ','_')}_notes_{datetime.now().strftime('%Y%m%d')}.csv", mime="text/csv")
-            st.markdown("---")
-            staff_filter_options = ["All Staff"] + all_staff
-            selected_staff = st.selectbox("\U0001f464 Filter by Staff:", staff_filter_options, index=0)
-            search = st.text_input("\U0001f50d Search notes:", placeholder="Search by routine, dancer, or note content...")
-            for num, title, dancers in show_order:
-                if num == 0:
-                    st.markdown("---")
-                    st.markdown("### \U00002615 BREAK")
-                    st.markdown("---")
-                    continue
-                key = f"#{num}"
-                if key in notes_data and notes_data[key]:
-                    filtered_notes = notes_data[key]
-                    if selected_staff != "All Staff":
-                        filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-                    if not filtered_notes:
-                        continue
-                    display_label = f"#{num} - {title} ({dancers})"
-                    if search:
-                        search_lower = search.lower()
-                        match = search_lower in display_label.lower()
-                        if not match:
-                            for n in filtered_notes:
-                                if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
-                                    match = True
-                                    break
-                        if not match:
-                            continue
-                    with st.expander(f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"):
-                        for note in filtered_notes:
-                            st.markdown(f"**{note['staff']}** - *{note['time']}*")
-                            st.write(note["note"])
-                            note_index = notes_data[key].index(note)
-                            delete_key = f"delete_{key}_{note_index}_{note['time']}"
-                            if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
-                                if delete_note(selected_show, key, note_index):
-                                    st.success("Note deleted!")
-                                    st.rerun()
-                            st.markdown("---")
-    with tab_manage:
-        st.subheader("\U00002699\ufe0f Manage Shows")
-        st.markdown("---")
-        st.markdown("### \U00002795 Create New Show")
-        new_show_name = st.text_input("Show Name:", placeholder="e.g. Comp Show 2027", key="new_show_name")
-        st.markdown("**Enter routines** (one per line, use `|` or `-` to separate title and dancers):")
-        st.caption("Example: Footloose | Large Tap Group")
-        st.caption("Type BREAK on its own line for intermission")
-        new_routines_text = st.text_area("Routines:", height=200, placeholder="Footloose | Large Tap Group\nPoison | Daytona Hip Hop\nBREAK\nConnection | SHLW Open", key="new_routines")
-        if st.button("\U0001f4be Create Show", type="primary", use_container_width=True):
-            if not new_show_name.strip():
-                st.error("Please enter a show name.")
-            elif new_show_name.strip() in shows:
-                st.error("A show with that name already exists.")
-            elif not new_routines_text.strip():
-                st.error("Please enter at least one routine.")
-            else:
-                parsed = parse_routines_text(new_routines_text)
-                shows[new_show_name.strip()] = {"routines": "custom", "custom_routines": parsed, "created": datetime.now().strftime("%b %d, %Y")}
-                save_shows(shows)
-                st.success(f"Show '{new_show_name.strip()}' created with {len([r for r in parsed if r[0] != 0])} routines!")
-                st.rerun()
-        st.markdown("---")
-        st.markdown("### \U0001f5d1\ufe0f Delete a Show")
-        st.warning("Deleting a show will permanently remove all its notes. Download a backup first!")
-        deletable = [s for s in show_names]
-        if deletable:
-            show_to_delete = st.selectbox("Select show to delete:", deletable, key="delete_show_select")
-            confirm_text = st.text_input("Type the show name to confirm deletion:", key="confirm_delete", placeholder="Type exact show name here")
-            if st.button("\U0001f6a8 Delete Show Permanently", type="primary", use_container_width=True):
-                if confirm_text.strip() == show_to_delete:
-                    notes_file = get_notes_file(show_to_delete)
-                    if os.path.exists(notes_file):
-                        os.remove(notes_file)
-                    del shows[show_to_delete]
-                    if not shows:
-                        shows["Comp Show 2026"] = {"routines": "COMP_2026", "created": "Feb 12, 2026"}
-                    save_shows(shows)
-                    st.success(f"Show '{show_to_delete}' has been deleted.")
-                    st.rerun()
-                else:
-                    st.error("Show name doesn't match. Please type the exact name to confirm.")
-        st.markdown("---")
-        st.markdown("### \U0001f4cb Current Shows")
-        for sname, sinfo in shows.items():
-            nc = len(load_notes(sname))
-            created = sinfo.get("created", "Unknown")
-            rcount = len([r for r in get_routines(sname, shows) if r[0] != 0])
-            st.markdown(f"**{sname}** - {rcount} routines, {nc} routines with notes (Created: {created})")
-    st.markdown("---")
-    st.markdown("<p style='text-align: center; color: gray;'>Pure Energy Dance Studio</p>", unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
