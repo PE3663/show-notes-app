@@ -245,7 +245,8 @@ def main():
                                 continue
 
             display_label = f"#{num} - {title} ({dancers})"
-            if search:                        search_lower = search.lower()
+            if search:
+                                search_lower = search.lower()
                         match = search_lower in display_label.lower()
                         if not match:
                             for n in filtered_notes:
