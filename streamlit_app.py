@@ -12,8 +12,7 @@ st.set_page_config(
 DATA_FILE = "show_notes_data.json"
 
 # Admin users who can see all notes
-ADMIN_USERS = ["Sheila", "Sheila Nagy", "Jim", "Jim Nagy"]
-
+ADMIN_USERS = ["Jim Nagy", "Sheila Nagy"]
 def is_admin(staff_name):
     """Check if the staff member is an admin who can see all notes."""
     return staff_name.strip() in ADMIN_USERS
