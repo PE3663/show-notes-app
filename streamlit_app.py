@@ -175,8 +175,8 @@ def main():
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
                     continue
-                key = f"#{num}"            if key in notes_data:
-                
+                key = f"#{num}"
+                if key in notes_data and notes_data[key]:                
                     # Get current user's name from the enter notes tab
                     if 'staff_name' in st.session_state:
                         current_user = st.session_state['staff_name']
