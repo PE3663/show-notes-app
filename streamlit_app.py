@@ -1,6 +1,7 @@
 import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
 import json
-import os
 import csv
 import io
 from datetime import datetime
@@ -11,7 +12,80 @@ st.set_page_config(
     layout="centered",
 )
 
-DATA_FILE = "show_notes_data.json"
+
+# --- Google Sheets Connection ---
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
+
+@st.cache_resource
+def get_gsheet_connection():
+    """Create a connection to Google Sheets using service account credentials."""
+    creds_dict = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    client = gspread.authorize(creds)
+    return client
+
+def get_worksheet():
+    """Get the show notes worksheet, create if it doesn't exist."""
+    client = get_gsheet_connection()
+    spreadsheet_id = st.secrets["SPREADSHEET_ID"]
+    sh = client.open_by_key(spreadsheet_id)
+    try:
+        ws = sh.worksheet("ShowNotes")
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sh.add_worksheet(title="ShowNotes", rows=1000, cols=4)
+        ws.append_row(["routine_key", "staff", "note", "time"])
+    return ws
+
+
+def load_notes():
+    """Load all notes from Google Sheets into a dict."""
+    try:
+        ws = get_worksheet()
+        records = ws.get_all_records()
+        notes_data = {}
+        for row in records:
+            key = row["routine_key"]
+            if key not in notes_data:
+                notes_data[key] = []
+            notes_data[key].append({
+                "staff": row["staff"],
+                "note": row["note"],
+                "time": row["time"],
+            })
+        return notes_data
+    except Exception as e:
+        st.error(f"Error loading notes: {e}")
+        return {}
+
+def save_note(routine_key, staff, note_text):
+    """Save a new note to Google Sheets."""
+    try:
+        ws = get_worksheet()
+        timestamp = datetime.now().strftime("%b %d, %Y %I:%M %p")
+        ws.append_row([routine_key, staff, note_text, timestamp])
+        return True
+    except Exception as e:
+        st.error(f"Error saving note: {e}")
+        return False
+
+def delete_note(routine_key, staff, time_str):
+    """Delete a note from Google Sheets by matching key, staff, and time."""
+    try:
+        ws = get_worksheet()
+        records = ws.get_all_values()
+        for i, row in enumerate(records):
+            if i == 0:
+                continue  # skip header
+            if row[0] == routine_key and row[1] == staff and row[3] == time_str:
+                ws.delete_rows(i + 1)
+                return True
+        return False
+    except Exception as e:
+        st.error(f"Error deleting note: {e}")
+        return False
 
 
 def check_admin_password(password):
@@ -20,6 +94,13 @@ def check_admin_password(password):
         return password == st.secrets["ADMIN_PASSWORD"]
     except (KeyError, FileNotFoundError):
         return False
+
+def get_all_staff_names(notes_data):
+    staff_names = set()
+    for routine_notes in notes_data.values():
+        for note in routine_notes:
+            staff_names.add(note['staff'])
+    return sorted(list(staff_names))
 
 
 SHOW_ORDER = [
@@ -119,48 +200,15 @@ SHOW_ORDER = [
 ]
 
 
-def load_notes():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-
-def save_notes(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-
-
-def delete_note(routine_key, note_index):
-    notes_data = load_notes()
-    if routine_key in notes_data and 0 <= note_index < len(notes_data[routine_key]):
-        del notes_data[routine_key][note_index]
-        if not notes_data[routine_key]:
-            del notes_data[routine_key]
-        save_notes(notes_data)
-        return True
-    return False
-
-
-def get_all_staff_names(notes_data):
-    staff_names = set()
-    for routine_notes in notes_data.values():
-        for note in routine_notes:
-            staff_names.add(note['staff'])
-    return sorted(list(staff_names))
-
-
 def main():
     st.markdown(
         """
-# \U0001f3ad Pure Energy Dance Studio
-### Comp Show 2026 - Staff Notes
----
-""",
+        # \U0001f3ad Pure Energy Dance Studio
+        ### Comp Show 2026 - Staff Notes
+        ---
+        """,
         unsafe_allow_html=True,
     )
-
-    notes_data = load_notes()
 
     staff_name = st.text_input("Your Name:", placeholder="Enter your name")
 
@@ -185,12 +233,14 @@ def main():
         if selected != "--- BREAK ---":
             st.subheader(f"Notes for: {selected}")
             key = selected.split(" - ")[0].strip()
+
+            notes_data = load_notes()
             existing = notes_data.get(key, [])
             if existing:
                 st.markdown("**Previous Notes:**")
                 for note in existing:
                     st.info(
-                        f"**{note['staff']}** ({note['time']}): \n \n{note['note']}"
+                        f"**{note['staff']}** ({note['time']}): \n\n{note['note']}"
                     )
 
             note_text = st.text_area(
@@ -210,35 +260,21 @@ def main():
                 elif not note_text.strip():
                     st.error("Please enter a note.")
                 else:
-                    if key not in notes_data:
-                        notes_data[key] = []
-                    notes_data[key].append(
-                        {
-                            "staff": staff_name.strip(),
-                            "note": note_text.strip(),
-                            "time": datetime.now().strftime(
-                                "%b %d, %Y %I:%M %p"
-                            ),
-                        }
-                    )
-                    save_notes(notes_data)
-                    st.success("Note saved!")
-                    st.rerun()
+                    if save_note(key, staff_name.strip(), note_text.strip()):
+                        st.success("Note saved!")
+                        st.rerun()
         else:
             st.subheader("\U00002615 Intermission Break")
             st.write("No notes needed for the break.")
 
     with tab_review:
         st.subheader("Review All Notes")
-
-        # Password gate - must enter password to see any notes
         admin_password = st.text_input(
             "\U0001f512 Enter Password:",
             type="password",
             placeholder="Enter password to access notes",
             key="admin_pw",
         )
-
         is_admin = check_admin_password(admin_password)
 
         if not admin_password:
@@ -265,8 +301,8 @@ def main():
                     if key in notes_data and notes_data[key]:
                         for note in notes_data[key]:
                             csv_writer.writerow([f"{title} - {dancers}", note['staff'], note['note'], note['time']])
-
                 csv_data = csv_buffer.getvalue()
+
                 st.download_button(
                     label="\U0001f4be Download All Notes (CSV)",
                     data=csv_data,
@@ -274,7 +310,6 @@ def main():
                     mime="text/csv",
                     help="Download all notes as a CSV file for backup",
                 )
-
                 st.markdown("---")
 
                 # Staff filter
@@ -300,7 +335,6 @@ def main():
                     key = f"#{num}"
                     if key in notes_data and notes_data[key]:
                         filtered_notes = notes_data[key]
-
                         if selected_staff != "All Staff":
                             filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
 
@@ -329,10 +363,9 @@ def main():
                                 )
                                 st.write(note["note"])
                                 # Delete button
-                                note_index = notes_data[key].index(note)
-                                delete_key = f"delete_{key}_{note_index}_{note['time']}"
+                                delete_key = f"delete_{key}_{note['staff']}_{note['time']}"
                                 if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
-                                    if delete_note(key, note_index):
+                                    if delete_note(key, note['staff'], note['time']):
                                         st.success("Note deleted successfully!")
                                         st.rerun()
                                 st.markdown("---")
