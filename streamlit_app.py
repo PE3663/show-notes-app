@@ -240,7 +240,7 @@ def main():
             if key in notes_data and notes_data[key]:
                 filtered_notes = notes_data[key]
                                        # Apply filtering based on admin status
-                            if current_user and not is_admin(current_user):
+                                if current_user and not is_admin(current_user):
                                     # Non-admin users can only see their own notes
                                     filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
                             elif selected_staff != "All Staff":
