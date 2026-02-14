@@ -188,12 +188,10 @@ def main():
                     filtered_notes = notes_data[key]
                     
                     # Apply filtering based on admin status
-                                    if current_user and not is_admin(current_user):
-                        # Non-admin users can only see their own notes
+                    if current_user and not is_admin(current_user):                        # Non-admin users can only see their own notes
                         filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
                     
-                    ot filtered_notes:
-                        continue
+                    if not filtered_notes:                        continue
                     
                     for note in filtered_notes:
                             csv_writer.writerow([f"{title} - {dancers}", note['note']])
