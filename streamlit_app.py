@@ -192,7 +192,7 @@ def main():
                         # Non-admin users can only see their own notes
                         filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
                     
-                    if not filtered_notes:
+                    ot filtered_notes:
                         continue
                     
                     for note in filtered_notes:
