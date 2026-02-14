@@ -239,7 +239,8 @@ def main():
                 if current_user and not is_admin(current_user):
                                     # Non-admin users can only see their own notes
                                     filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
-                if selected_staff != "All Staff":  # Admin users can filter by staff member                    
+                if selected_staff != "All Staff":  # Admin users can filter by staff member
+                                    filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
                                 if not filtered_notes:
                                         continue
 
