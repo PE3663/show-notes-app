@@ -85,7 +85,7 @@ SHOW_ORDER = [
     (60, "Hunter", "Kristyn Contemp"),
     (61, "Soda Pop", "Chelsea Ellie Jazz"),
     (62, "It Never Ends", "Jordyn Lyrical"),
-    (63, "Ive Come To Realize", "LW Lyrical"),
+    (63, "Ives Come To Realize", "LW Lyrical"),
     (64, "I Love Play Rehearsal", "Kailyn Theatre"),
     (65, "Swagger Jagger", "Callie Jazz"),
     (66, "Always", "Nevaeh Lyrical"),
@@ -153,10 +153,10 @@ def get_all_staff_names(notes_data):
 def main():
     st.markdown(
         """
-    # \U0001f3ad Pure Energy Dance Studio
-    ### Comp Show 2026 - Staff Notes
-    ---
-    """,
+# \U0001f3ad Pure Energy Dance Studio
+### Comp Show 2026 - Staff Notes
+---
+""",
         unsafe_allow_html=True,
     )
 
@@ -174,7 +174,6 @@ def main():
 
     with tab_enter:
         st.subheader("Select Routine")
-
         routine_options = []
         for num, title, dancers in SHOW_ORDER:
             if num == 0:
@@ -193,12 +192,11 @@ def main():
             st.subheader(f"Notes for: {selected}")
             key = selected.split(" - ")[0].strip()
             existing = notes_data.get(key, [])
-
             if existing:
                 st.markdown("**Previous Notes:**")
                 for note in existing:
                     st.info(
-                        f"**{note['staff']}** ({note['time']}):  \n  \n{note['note']}"
+                        f"**{note['staff']}** ({note['time']}): \n \n{note['note']}"
                     )
 
             note_text = st.text_area(
@@ -247,10 +245,15 @@ def main():
             placeholder="Enter admin password to view all staff notes",
             key="admin_pw",
         )
+
         is_admin = check_admin_password(admin_password)
 
         if is_admin:
             st.success("\U0001f513 Admin access granted - viewing all staff notes")
+        elif current_user:
+            st.info(f"\U0001f464 Viewing your notes, {current_user}")
+        else:
+            st.warning("\U0001f446 Please enter your name above to see your notes.")
 
         if not notes_data:
             st.info("No notes have been saved yet.")
@@ -261,26 +264,21 @@ def main():
             csv_buffer = io.StringIO()
             csv_writer = csv.writer(csv_buffer)
             csv_writer.writerow(["Routine", "Notes"])
-
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
                     continue
                 key = f"#{num}"
                 if key in notes_data and notes_data[key]:
                     filtered_notes = notes_data[key]
-
                     # Non-admin users can only see their own notes
                     if not is_admin and current_user:
-                        filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
-
+                        filtered_notes = [n for n in notes_data[key] if n['staff'].lower() == current_user.lower()]
                     if not filtered_notes:
                         continue
-
                     for note in filtered_notes:
                         csv_writer.writerow([f"{title} - {dancers}", note['note']])
 
             csv_data = csv_buffer.getvalue()
-
             st.download_button(
                 label="\U0001f4be Download All Notes (CSV)",
                 data=csv_data,
@@ -307,6 +305,9 @@ def main():
                 placeholder="Search by routine, dancer, or note content...",
             )
 
+            # Track if any notes were found for the current user
+            found_notes = False
+
             for num, title, dancers in SHOW_ORDER:
                 if num == 0:
                     st.markdown("---")
@@ -318,9 +319,9 @@ def main():
                 if key in notes_data and notes_data[key]:
                     filtered_notes = notes_data[key]
 
-                    # Non-admin users can only see their own notes
+                    # Non-admin users can only see their own notes (case-insensitive)
                     if not is_admin and current_user:
-                        filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
+                        filtered_notes = [n for n in filtered_notes if n['staff'].lower() == current_user.lower()]
 
                     if selected_staff != "All Staff":
                         filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
@@ -341,6 +342,8 @@ def main():
                         if not match:
                             continue
 
+                    found_notes = True
+
                     with st.expander(
                         f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"
                     ):
@@ -349,7 +352,6 @@ def main():
                                 f"**{note['staff']}** - *{note['time']}*"
                             )
                             st.write(note["note"])
-
                             # Add delete button (only for admin)
                             if is_admin:
                                 note_index = notes_data[key].index(note)
@@ -359,6 +361,10 @@ def main():
                                         st.success("Note deleted successfully!")
                                         st.rerun()
                             st.markdown("---")
+
+            # Show message if no notes found for the user
+            if not found_notes and current_user and not is_admin:
+                st.info(f"No notes found for **{current_user}**. Notes you enter in the Enter Notes tab will appear here.")
 
     st.markdown("---")
     st.markdown(
