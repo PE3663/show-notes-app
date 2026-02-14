@@ -13,18 +13,13 @@ st.set_page_config(
 
 DATA_FILE = "show_notes_data.json"
 
-# Admin users who can see all staff notes
-ADMIN_USERS = ["Jim Nagy", "Sheila Nagy"]
 
-
-def normalize_name(name):
-    return name.strip().lower()
-
-
-def is_admin(staff_name):
-    """Check if the staff member is an admin who can see all notes."""
-    admin_names = {normalize_name(name) for name in ADMIN_USERS}
-    return normalize_name(staff_name) in admin_names
+def check_admin_password(password):
+    """Check if the entered password matches the admin password."""
+    try:
+        return password == st.secrets["ADMIN_PASSWORD"]
+    except (KeyError, FileNotFoundError):
+        return False
 
 
 SHOW_ORDER = [
@@ -245,6 +240,18 @@ def main():
         st.subheader("All Saved Notes")
         notes_data = load_notes()
 
+        # Admin password check
+        admin_password = st.text_input(
+            "\U0001f512 Admin Password (optional):",
+            type="password",
+            placeholder="Enter admin password to view all staff notes",
+            key="admin_pw",
+        )
+        is_admin = check_admin_password(admin_password)
+
+        if is_admin:
+            st.success("\U0001f513 Admin access granted - viewing all staff notes")
+
         if not notes_data:
             st.info("No notes have been saved yet.")
         else:
@@ -263,7 +270,7 @@ def main():
                     filtered_notes = notes_data[key]
 
                     # Non-admin users can only see their own notes
-                    if current_user and not is_admin(current_user):
+                    if not is_admin and current_user:
                         filtered_notes = [n for n in notes_data[key] if n['staff'] == current_user]
 
                     if not filtered_notes:
@@ -285,7 +292,7 @@ def main():
             st.markdown("---")
 
             # Only show staff filter for admin users
-            if current_user and is_admin(current_user):
+            if is_admin:
                 staff_filter_options = ["All Staff"] + all_staff
                 selected_staff = st.selectbox(
                     "\U0001f464 Filter by Staff:",
@@ -312,7 +319,7 @@ def main():
                     filtered_notes = notes_data[key]
 
                     # Non-admin users can only see their own notes
-                    if current_user and not is_admin(current_user):
+                    if not is_admin and current_user:
                         filtered_notes = [n for n in filtered_notes if n['staff'] == current_user]
 
                     if selected_staff != "All Staff":
@@ -343,13 +350,14 @@ def main():
                             )
                             st.write(note["note"])
 
-                            # Add delete button
-                            note_index = notes_data[key].index(note)
-                            delete_key = f"delete_{key}_{note_index}_{note['time']}"
-                            if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
-                                if delete_note(key, note_index):
-                                    st.success("Note deleted successfully!")
-                                    st.rerun()
+                            # Add delete button (only for admin)
+                            if is_admin:
+                                note_index = notes_data[key].index(note)
+                                delete_key = f"delete_{key}_{note_index}_{note['time']}"
+                                if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
+                                    if delete_note(key, note_index):
+                                        st.success("Note deleted successfully!")
+                                        st.rerun()
                             st.markdown("---")
 
     st.markdown("---")
