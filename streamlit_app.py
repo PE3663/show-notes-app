@@ -162,15 +162,9 @@ def main():
 
     notes_data = load_notes()
 
-    # Ask for name BEFORE tabs so Review tab knows who is viewing
     staff_name = st.text_input("Your Name:", placeholder="Enter your name")
-    if staff_name:
-        st.session_state['staff_name'] = staff_name
 
-    # Determine current user
-    current_user = st.session_state.get('staff_name', '')
-
-    tab_enter, tab_review = st.tabs(["\U0001f4dd Enter Notes", "\U0001f4cb Review All Notes"])
+    tab_enter, tab_review = st.tabs(["\U0001f4dd Enter Notes", "\U0001f512 Review All Notes"])
 
     with tab_enter:
         st.subheader("Select Routine")
@@ -235,136 +229,113 @@ def main():
             st.write("No notes needed for the break.")
 
     with tab_review:
-        st.subheader("All Saved Notes")
-        notes_data = load_notes()
+        st.subheader("Review All Notes")
 
-        # Admin password check
+        # Password gate - must enter password to see any notes
         admin_password = st.text_input(
-            "\U0001f512 Admin Password (optional):",
+            "\U0001f512 Enter Password:",
             type="password",
-            placeholder="Enter admin password to view all staff notes",
+            placeholder="Enter password to access notes",
             key="admin_pw",
         )
 
         is_admin = check_admin_password(admin_password)
 
-        if is_admin:
-            st.success("\U0001f513 Admin access granted - viewing all staff notes")
-        elif current_user:
-            st.info(f"\U0001f464 Viewing your notes, {current_user}")
+        if not admin_password:
+            st.info("\U0001f512 This section is password protected. Enter the password above to view all staff notes.")
+        elif not is_admin:
+            st.error("\U0000274c Incorrect password. Please try again.")
         else:
-            st.warning("\U0001f446 Please enter your name above to see your notes.")
+            st.success("\U0001f513 Access granted - viewing all staff notes")
+            notes_data = load_notes()
 
-        if not notes_data:
-            st.info("No notes have been saved yet.")
-        else:
-            all_staff = get_all_staff_names(notes_data)
+            if not notes_data:
+                st.info("No notes have been saved yet.")
+            else:
+                all_staff = get_all_staff_names(notes_data)
 
-            # Create CSV export
-            csv_buffer = io.StringIO()
-            csv_writer = csv.writer(csv_buffer)
-            csv_writer.writerow(["Routine", "Notes"])
-            for num, title, dancers in SHOW_ORDER:
-                if num == 0:
-                    continue
-                key = f"#{num}"
-                if key in notes_data and notes_data[key]:
-                    filtered_notes = notes_data[key]
-                    # Non-admin users can only see their own notes
-                    if not is_admin and current_user:
-                        filtered_notes = [n for n in notes_data[key] if n['staff'].lower() == current_user.lower()]
-                    if not filtered_notes:
+                # Create CSV export
+                csv_buffer = io.StringIO()
+                csv_writer = csv.writer(csv_buffer)
+                csv_writer.writerow(["Routine", "Staff", "Note", "Time"])
+                for num, title, dancers in SHOW_ORDER:
+                    if num == 0:
                         continue
-                    for note in filtered_notes:
-                        csv_writer.writerow([f"{title} - {dancers}", note['note']])
+                    key = f"#{num}"
+                    if key in notes_data and notes_data[key]:
+                        for note in notes_data[key]:
+                            csv_writer.writerow([f"{title} - {dancers}", note['staff'], note['note'], note['time']])
 
-            csv_data = csv_buffer.getvalue()
-            st.download_button(
-                label="\U0001f4be Download All Notes (CSV)",
-                data=csv_data,
-                file_name=f"show_notes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv",
-                help="Download all notes as a CSV file for backup",
-            )
+                csv_data = csv_buffer.getvalue()
+                st.download_button(
+                    label="\U0001f4be Download All Notes (CSV)",
+                    data=csv_data,
+                    file_name=f"show_notes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv",
+                    help="Download all notes as a CSV file for backup",
+                )
 
-            st.markdown("---")
+                st.markdown("---")
 
-            # Only show staff filter for admin users
-            if is_admin:
+                # Staff filter
                 staff_filter_options = ["All Staff"] + all_staff
                 selected_staff = st.selectbox(
                     "\U0001f464 Filter by Staff:",
                     staff_filter_options,
                     index=0,
                 )
-            else:
-                selected_staff = "All Staff"
 
-            search = st.text_input(
-                "\U0001f50d Search notes:",
-                placeholder="Search by routine, dancer, or note content...",
-            )
+                search = st.text_input(
+                    "\U0001f50d Search notes:",
+                    placeholder="Search by routine, dancer, or note content...",
+                )
 
-            # Track if any notes were found for the current user
-            found_notes = False
-
-            for num, title, dancers in SHOW_ORDER:
-                if num == 0:
-                    st.markdown("---")
-                    st.markdown("### \U00002615 BREAK")
-                    st.markdown("---")
-                    continue
-
-                key = f"#{num}"
-                if key in notes_data and notes_data[key]:
-                    filtered_notes = notes_data[key]
-
-                    # Non-admin users can only see their own notes (case-insensitive)
-                    if not is_admin and current_user:
-                        filtered_notes = [n for n in filtered_notes if n['staff'].lower() == current_user.lower()]
-
-                    if selected_staff != "All Staff":
-                        filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-
-                    if not filtered_notes:
+                for num, title, dancers in SHOW_ORDER:
+                    if num == 0:
+                        st.markdown("---")
+                        st.markdown("### \U00002615 BREAK")
+                        st.markdown("---")
                         continue
 
-                    display_label = f"#{num} - {title} ({dancers})"
+                    key = f"#{num}"
+                    if key in notes_data and notes_data[key]:
+                        filtered_notes = notes_data[key]
 
-                    if search:
-                        search_lower = search.lower()
-                        match = search_lower in display_label.lower()
-                        if not match:
-                            for n in filtered_notes:
-                                if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
-                                    match = True
-                                    break
-                        if not match:
+                        if selected_staff != "All Staff":
+                            filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
+
+                        if not filtered_notes:
                             continue
 
-                    found_notes = True
+                        display_label = f"#{num} - {title} ({dancers})"
 
-                    with st.expander(
-                        f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"
-                    ):
-                        for note in filtered_notes:
-                            st.markdown(
-                                f"**{note['staff']}** - *{note['time']}*"
-                            )
-                            st.write(note["note"])
-                            # Add delete button (only for admin)
-                            if is_admin:
+                        if search:
+                            search_lower = search.lower()
+                            match = search_lower in display_label.lower()
+                            if not match:
+                                for n in filtered_notes:
+                                    if search_lower in n['staff'].lower() or search_lower in n['note'].lower():
+                                        match = True
+                                        break
+                            if not match:
+                                continue
+
+                        with st.expander(
+                            f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"
+                        ):
+                            for note in filtered_notes:
+                                st.markdown(
+                                    f"**{note['staff']}** - *{note['time']}*"
+                                )
+                                st.write(note["note"])
+                                # Delete button
                                 note_index = notes_data[key].index(note)
                                 delete_key = f"delete_{key}_{note_index}_{note['time']}"
                                 if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
                                     if delete_note(key, note_index):
                                         st.success("Note deleted successfully!")
                                         st.rerun()
-                            st.markdown("---")
-
-            # Show message if no notes found for the user
-            if not found_notes and current_user and not is_admin:
-                st.info(f"No notes found for **{current_user}**. Notes you enter in the Enter Notes tab will appear here.")
+                                st.markdown("---")
 
     st.markdown("---")
     st.markdown(
