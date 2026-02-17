@@ -382,13 +382,13 @@ def main():
                         with st.expander(
                             f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"
                         ):
-                            for note in filtered_notes:
+                            for idx, note in enumerate(filtered_notes):
                                 st.markdown(
                                     f"**{note['staff']}** - *{note['time']}*"
                                 )
                                 st.write(note["note"])
                                 # Delete button
-                                delete_key = f"delete_{key}_{note['staff']}_{note['time']}"
+                                delete_key = f"delete_{key}_{note['staff']}_{note['time']}_{idx}"
                                 if st.button("\U0001f5d1\ufe0f Delete Note", key=delete_key):
                                     if delete_note(key, note['staff'], note['time']):
                                         st.success("Note deleted successfully!")
