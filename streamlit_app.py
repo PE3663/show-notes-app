@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 
-# --- Google Sheets Connection ---
+# --- Google Sheets Connection ----
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -38,7 +38,6 @@ def get_worksheet():
         ws = sh.add_worksheet(title="ShowNotes", rows=1000, cols=4)
         ws.append_row(["routine_key", "staff", "note", "time"])
     return ws
-
 
 def load_notes():
     """Load all notes from Google Sheets into a dict."""
@@ -87,7 +86,6 @@ def delete_note(routine_key, staff, time_str):
         st.error(f"Error deleting note: {e}")
         return False
 
-
 def check_admin_password(password):
     """Check if the entered password matches the admin password."""
     try:
@@ -101,7 +99,6 @@ def get_all_staff_names(notes_data):
         for note in routine_notes:
             staff_names.add(note['staff'])
     return sorted(list(staff_names))
-
 
 SHOW_ORDER = [
     (1, "Footloose", "Large Tap Group"),
@@ -199,7 +196,6 @@ SHOW_ORDER = [
     (93, "We The North", "LW Hip Hop"),
 ]
 
-
 def main():
     st.markdown(
         """
@@ -216,6 +212,7 @@ def main():
 
     with tab_enter:
         st.subheader("Select Routine")
+
         routine_options = []
         for num, title, dancers in SHOW_ORDER:
             if num == 0:
@@ -223,17 +220,26 @@ def main():
             else:
                 routine_options.append(f"#{num} - {title} ({dancers})")
 
+        # --- Track routine index in session_state ---
+        if "routine_index" not in st.session_state:
+            st.session_state.routine_index = 0
+
         selected = st.selectbox(
             "Choose a routine:",
             routine_options,
-            index=0,
+            index=st.session_state.routine_index,
             label_visibility="collapsed",
         )
+
+        # Keep index synced if staff manually picks from dropdown
+        st.session_state.routine_index = routine_options.index(selected)
+
+        # --- Progress indicator ---
+        st.caption(f"Routine {st.session_state.routine_index + 1} of {len(routine_options)}")
 
         if selected != "--- BREAK ---":
             st.subheader(f"Notes for: {selected}")
             key = selected.split(" - ")[0].strip()
-
             notes_data = load_notes()
             existing = notes_data.get(key, [])
             if existing:
@@ -250,22 +256,53 @@ def main():
                 key=f"note_{key}",
             )
 
-            if st.button(
-                "\U0001f4be Save Note",
-                type="primary",
-                use_container_width=True,
-            ):
-                if not staff_name.strip():
-                    st.error("Please enter your name.")
-                elif not note_text.strip():
-                    st.error("Please enter a note.")
-                else:
-                    if save_note(key, staff_name.strip(), note_text.strip()):
-                        st.success("Note saved!")
-                        st.rerun()
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                prev_disabled = st.session_state.routine_index == 0
+                if st.button("Previous", use_container_width=True, disabled=prev_disabled):
+                    st.session_state.routine_index -= 1
+                    st.rerun()
+
+            with col2:
+                if st.button(
+                    "Save Note",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    if not staff_name.strip():
+                        st.error("Please enter your name.")
+                    elif not note_text.strip():
+                        st.error("Please enter a note.")
+                    else:
+                        if save_note(key, staff_name.strip(), note_text.strip()):
+                            st.success("Note saved!")
+                            st.rerun()
+
+            with col3:
+                next_disabled = st.session_state.routine_index >= len(routine_options) - 1
+                if st.button("Next", use_container_width=True, disabled=next_disabled):
+                    st.session_state.routine_index += 1
+                    st.rerun()
+
         else:
-            st.subheader("\U00002615 Intermission Break")
+            st.subheader("\u2615 Intermission Break")
             st.write("No notes needed for the break.")
+
+            # Still show Previous/Next on break so they can navigate past it
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                prev_disabled = st.session_state.routine_index == 0
+                if st.button("Previous", use_container_width=True, disabled=prev_disabled, key="break_prev"):
+                    st.session_state.routine_index -= 1
+                    st.rerun()
+
+            with col3:
+                next_disabled = st.session_state.routine_index >= len(routine_options) - 1
+                if st.button("Next", use_container_width=True, disabled=next_disabled, key="break_next"):
+                    st.session_state.routine_index += 1
+                    st.rerun()
 
     with tab_review:
         st.subheader("Review All Notes")
@@ -276,20 +313,17 @@ def main():
             key="admin_pw",
         )
         is_admin = check_admin_password(admin_password)
-
         if not admin_password:
             st.info("\U0001f512 This section is password protected. Enter the password above to view all staff notes.")
         elif not is_admin:
-            st.error("\U0000274c Incorrect password. Please try again.")
+            st.error("\u274c Incorrect password. Please try again.")
         else:
             st.success("\U0001f513 Access granted - viewing all staff notes")
             notes_data = load_notes()
-
             if not notes_data:
                 st.info("No notes have been saved yet.")
             else:
                 all_staff = get_all_staff_names(notes_data)
-
                 # Create CSV export
                 csv_buffer = io.StringIO()
                 csv_writer = csv.writer(csv_buffer)
@@ -302,7 +336,6 @@ def main():
                         for note in notes_data[key]:
                             csv_writer.writerow([f"{title} - {dancers}", note['staff'], note['note'], note['time']])
                 csv_data = csv_buffer.getvalue()
-
                 st.download_button(
                     label="\U0001f4be Download All Notes (CSV)",
                     data=csv_data,
@@ -311,7 +344,6 @@ def main():
                     help="Download all notes as a CSV file for backup",
                 )
                 st.markdown("---")
-
                 # Staff filter
                 staff_filter_options = ["All Staff"] + all_staff
                 selected_staff = st.selectbox(
@@ -319,30 +351,24 @@ def main():
                     staff_filter_options,
                     index=0,
                 )
-
                 search = st.text_input(
                     "\U0001f50d Search notes:",
                     placeholder="Search by routine, dancer, or note content...",
                 )
-
                 for num, title, dancers in SHOW_ORDER:
                     if num == 0:
                         st.markdown("---")
-                        st.markdown("### \U00002615 BREAK")
+                        st.markdown("### \u2615 BREAK")
                         st.markdown("---")
                         continue
-
                     key = f"#{num}"
                     if key in notes_data and notes_data[key]:
                         filtered_notes = notes_data[key]
                         if selected_staff != "All Staff":
                             filtered_notes = [n for n in filtered_notes if n['staff'] == selected_staff]
-
                         if not filtered_notes:
                             continue
-
                         display_label = f"#{num} - {title} ({dancers})"
-
                         if search:
                             search_lower = search.lower()
                             match = search_lower in display_label.lower()
@@ -353,7 +379,6 @@ def main():
                                         break
                             if not match:
                                 continue
-
                         with st.expander(
                             f"\U0001f3b5 {display_label} ({len(filtered_notes)} note{'s' if len(filtered_notes) != 1 else ''})"
                         ):
@@ -375,7 +400,6 @@ def main():
         "<div style='text-align: center; color: gray;'>Pure Energy Dance Studio - Comp Show 2026</div>",
         unsafe_allow_html=True,
     )
-
 
 if __name__ == "__main__":
     main()
